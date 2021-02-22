@@ -1,16 +1,25 @@
 var express = require('express');
 var router = express.Router();
+const {login} = require('../controller/user');
+const {SuccessModel, ErrorModel} = require('../model/resModel');
+
 
 router.post('/login', function (req, res, next) {
-    // 直接可以拿到解析好的body数据
     const {username, password} = req.body;
-    res.json({
-        errno: 0,
-        data: {
-            username,
-            password
+    const result = login(username, password);
+    return result.then(data => {
+        if (data.username) {
+            // 设置 session
+            req.session.username = data.username;
+            req.session.realname = data.realname;
+            // 同步到 redis - 这里使用express-session话会自动同步到redis去，不需要再写
+            // set(req.sessionId, req.session);
+
+            res.json(new SuccessModel());
+            return;
         }
-    });
+        res.json(new ErrorModel('登录失败'));
+    })
 });
 
 module.exports = router;

@@ -3,6 +3,7 @@ var express = require('express');
 var path = require('path');
 var cookieParser = require('cookie-parser');
 var logger = require('morgan');
+const session = require('express-session');
 
 // var indexRouter = require('./routes/index');
 // var usersRouter = require('./routes/users');
@@ -22,6 +23,16 @@ app.use(express.json());
 app.use(express.urlencoded({extended: false}));
 app.use(cookieParser());
 // app.use(express.static(path.join(__dirname, 'public')));
+
+// 解析路由之前处理session - 后续就能拿到session值了
+app.use(session({
+    secret: 'WJiol_#23123_', // 加密时的密钥 - session密码
+    cookie: {
+        path: '/', // 这个是默认配置，写不写无所谓
+        httpOnly: true, // 也是默认配置
+        maxAge: 24 * 60 * 60 * 1000 //失效时间 代替之前的expires
+    }
+}));
 
 // app.use('/', indexRouter);
 // app.use('/users', usersRouter);
