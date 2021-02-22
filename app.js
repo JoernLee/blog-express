@@ -5,6 +5,9 @@ var cookieParser = require('cookie-parser');
 var logger = require('morgan');
 const session = require('express-session');
 
+// 导入是一个函数，直接把session库放进去初始化
+const RedisStore = require('connect-redis')(session);
+
 // var indexRouter = require('./routes/index');
 // var usersRouter = require('./routes/users');
 
@@ -24,6 +27,13 @@ app.use(express.urlencoded({extended: false}));
 app.use(cookieParser());
 // app.use(express.static(path.join(__dirname, 'public')));
 
+// 把redis连接对象和store整合
+// 操作store就是间接操作redis数据库了,然后丢给session使用
+const redisClient = require('./db/redis');
+const sessionStore = new RedisStore({
+    // 配置
+    client: redisClient
+});
 // 解析路由之前处理session - 后续就能拿到session值了
 app.use(session({
     secret: 'WJiol_#23123_', // 加密时的密钥 - session密码
@@ -31,7 +41,8 @@ app.use(session({
         path: '/', // 这个是默认配置，写不写无所谓
         httpOnly: true, // 也是默认配置
         maxAge: 24 * 60 * 60 * 1000 //失效时间 代替之前的expires
-    }
+    },
+    store: sessionStore // 在这里其实session就和redis关联了，后续不需要单独操作session进redis了
 }));
 
 // app.use('/', indexRouter);
