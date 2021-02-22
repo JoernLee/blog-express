@@ -20,16 +20,16 @@ router.get('/list', function (req, res, next) {
     let author = req.query.author || '';  // 这里的query在app.js由框架处理过了
     const keyword = req.query.keyword || '';
 
-    /*if (req.query.isadmin) {
+    if (req.query.isadmin) {
         // 管理员界面
-        const loginCheckResult = loginCheck(req);
-        if (loginCheckResult) {
-            // 未登录
-            return loginCheckResult
-        }
-        // 强制查询自己的博客
+        // const loginCheckResult = loginCheck(req);
+        // if (loginCheckResult) {
+        //     // 未登录
+        //     return loginCheckResult
+        // }
+        // 强制查询自己的博客 - 现在有了session了
         author = req.session.username
-    }*/
+    }
 
     const result = getList(author, keyword);
     return result.then(listData => {
