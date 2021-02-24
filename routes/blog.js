@@ -8,11 +8,12 @@ const {
     delBlog
 } = require('../controller/blog');
 const {SuccessModel, ErrorModel} = require('../model/resModel');
+const loginCheck = require('../middleware/loginCheck');
 
 
 // 这里的路由地址需要和父路由（app.js中注册）结合，路由隔离
 // 按照之前方式每次都要重复写上父路由
-router.get('/list', function (req, res, next) {
+router.get('/list', (req, res, next) => {
     // express通过json-api可以自动解析json为字符串返回
     // 同时还会设置返回头Content-type为json格式
 
@@ -22,13 +23,13 @@ router.get('/list', function (req, res, next) {
 
     if (req.query.isadmin) {
         // 管理员界面
-        // const loginCheckResult = loginCheck(req);
-        // if (loginCheckResult) {
-        //     // 未登录
-        //     return loginCheckResult
-        // }
+        if (req.session.username === null) {
+            // 未登录
+            res.json(new ErrorModel('未登录'));
+            return
+        }
         // 强制查询自己的博客 - 现在有了session了
-        author = req.session.username
+        author = req.session.username;
     }
 
     const result = getList(author, keyword);
@@ -37,6 +38,46 @@ router.get('/list', function (req, res, next) {
         res.json(new SuccessModel(listData)); // 直接返回Model数据就行了，不需要return了
     });
 
+});
+
+router.get('/detail', (req, res, next) => {
+    const result = getDetail(req.query.id);
+    return result.then(data => {
+        res.json(new SuccessModel(data));
+    })
+});
+
+router.post('/new', loginCheck, (req, res, next) => {
+    // 把原先的登录验证可以借助刚写的中间件
+    req.body.author = req.session.username;
+    const result = newBlog(req.body);
+    return result.then(data => {
+        res.json(new SuccessModel(data));
+    })
+});
+
+router.post('/update', loginCheck, (req, res, next) => {
+    // 把原先的登录验证可以借助刚写的中间件
+    const result = updateBlog(req.query.id, req.body);
+    return result.then(data => {
+        if (data) {
+            res.json(new SuccessModel(data));
+        }else {
+            res.json(new ErrorModel('更新博客失败'));
+        }
+    })
+});
+
+router.post('/del', loginCheck, (req, res, next) => {
+    // 把原先的登录验证可以借助刚写的中间件
+    const result = delBlog(req.query.id, req.session.username);
+    return result.then(data => {
+        if (data) {
+            res.json(new SuccessModel());
+        }else {
+            res.json(new ErrorModel('删除博客失败'));
+        }
+    })
 });
 
 module.exports = router;
